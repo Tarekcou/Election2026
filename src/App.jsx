@@ -441,11 +441,11 @@ function App() {
       {/* ফুটার – উচ্চতা কমানো */}
       <div className="bg-gradient-to-r from-purple-800 to-indigo-900 text-white py-3 px-6 text-center text-base shrink-0">
         <div className="flex flex-wrap justify-center items-center gap-6">
-          <span>প্রার্থী ফলাফল</span>
-          <span>•</span>
-          <span>প্রার্থী: {toBanglaNum(candidates.length)}</span>
-          <span>•</span>
-          <span>গণভোট</span>
+          <span>মহিউদ্দিন জিলানী</span>
+          <span>উপজেলা আইসিটি অফিসার</span>
+          {/* <span>প্রার্থী: {toBanglaNum(candidates.length)}</span> */}
+          <span>মীরসরাই, চট্টগ্রাম</span>
+          {/* <span>গণভোট</span> */}
           <span>•</span>
           <span>পরবর্তী স্লাইড: ৬০ সেকেন্ডে</span>
         </div>
