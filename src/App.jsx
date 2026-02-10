@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import {
@@ -10,448 +10,299 @@ import {
   Legend,
 } from "recharts";
 
-function App() {
+/* ================= CONFIG ================= */
+const CENTERS = {
+  "04": "https://script.google.com/macros/s/AKfycbwfHELKrGVCiP9TMwRsvOZfdjF8ObIUxtwOujZBl2ddPrlm7loJ-nlxNVWmhLGXs4h-Rg/exec",
+  "05": "https://script.google.com/macros/s/AKfycbyz-M_klRMYk7Cny0H_ALg6lcjX1dihnE7Z1bMM6bpRsKd66fJ4iPdBnYvd3tQMLfXcuA/exec",
+  "08": "https://script.google.com/macros/s/AKfycbxpp0Ll4TTyYyU7bxAyq6gWH472DtVTJ_TS3NrE_4TQCFOMs7mZK3SbxWHcP3ZPhYdX/exec",
+  "09": "https://script.google.com/macros/s/AKfycbwM7Out06tGOEguuxfBPT1lqAEEsrjKVokGidpWLaO8U2fvfdtu0P14UBeQ9hhw2QM-/exec",
+  "10": "https://script.google.com/macros/s/AKfycbzUH12Z9jG993bGk5y-ujPNPRTGKTqAqprWmblZxrh16RUvYNBtKPG3TRlD8UA3Yuk/exec",
+};
+
+
+const REFRESH_INTERVAL = 3 * 60 * 1000;
+const SLIDE_INTERVAL = 60 * 1000;
+const CENTER_ROTATE_INTERVAL = 90 * 1000;
+
+/* ================= UTILS ================= */
+const banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+const toBanglaNum = (n) =>
+  n === null || n === undefined
+    ? "—"
+    : String(n).replace(/[0-9]/g, (d) => banglaDigits[d]);
+
+export default function App() {
+  const [center, setCenter] = useState("04");
   const [candidates, setCandidates] = useState([]);
   const [publicVote, setPublicVote] = useState({});
+  const [slide, setSlide] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const toBanglaNum = (num) => {
-    if (!num && num !== 0) return "—";
-    const banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
-    return String(num).replace(/[0-9]/g, (w) => banglaDigits[w]);
-  };
+  const API_BASE = CENTERS[center];
+useEffect(() => {
+  setCandidates([]);
+  setPublicVote({});
+  setLoading(true);
+}, [center]);
 
-  const fetchAllData = async (isManual = false) => {
-    if (isManual) setIsRefreshing(true);
-    try {
-      const [candidatesRes, voteRes] = await Promise.all([
-        axios.get(
-          "https://sheetdb.io/api/v1/0v396gb6ooljh?sheet=FinalCandidateResult",
-        ),
-        axios.get(
-          "https://sheetdb.io/api/v1/0v396gb6ooljh?sheet=PublicVoteResult",
-        ),
-      ]);
+  /* ================= FETCH DATA ================= */
+  const fetchData = useCallback(
+    
+    async (manual = false) => {
+        if (!API_BASE) return;
 
-      setCandidates(candidatesRes.data);
-      setPublicVote(voteRes.data[0] || {});
-      setError(null);
-    } catch (err) {
-      setError("ডেটা লোড করতে সমস্যা হয়েছে");
-    } finally {
-      setLoading(false);
-      if (isManual) setIsRefreshing(false);
-    }
-  };
+      manual && setRefreshing(true);
+      
+      try {
+        const [cRes, vRes] = await Promise.all([
+          axios.get(`${API_BASE}?route=candidates`),
+          axios.get(`${API_BASE}?route=publicVote`),
+        ]);
+
+        setCandidates(cRes.data || []);
+        setPublicVote(vRes.data || {});
+      } catch (e) {
+        console.error("Fetch error:", e);
+      } finally {
+        setLoading(false);
+        manual && setRefreshing(false);
+      }
+    },
+    [API_BASE]
+  );
+
 
   useEffect(() => {
-    fetchAllData();
+    fetchData();
+    const t = setInterval(fetchData, REFRESH_INTERVAL);
+    return () => clearInterval(t);
+  }, [fetchData]);
 
-    const interval = setInterval(
-      () => {
-        fetchAllData();
-      },
-      5 * 60 * 1000,
+  /* ================= SLIDE AUTO SWITCH ================= */
+  useEffect(() => {
+    const t = setInterval(
+      () => setSlide((s) => (s === 0 ? 1 : 0)),
+      SLIDE_INTERVAL
     );
-
-    return () => clearInterval(interval);
+    return () => clearInterval(t);
   }, []);
 
+  /* ================= CENTER AUTO ROTATE ================= */
   useEffect(() => {
-    if (candidates.length === 0) return;
+    const keys = Object.keys(CENTERS);
+    const t = setInterval(() => {
+      setCenter((prev) => keys[(keys.indexOf(prev) + 1) % keys.length]);
+    }, CENTER_ROTATE_INTERVAL);
+    return () => clearInterval(t);
+  }, []);
 
-    const slideInterval = setInterval(() => {
-      setCurrentSlide((prev) => (prev === 0 ? 1 : 0));
-    }, 60000);
+  /* ================= COMPUTE DATA ================= */
+  const totalVotes = useMemo(() => {
+    if (!Array.isArray(candidates)) return 0;
+    return candidates.reduce((s, c) => s + Number(c.votes || 0), 0);
+  }, [candidates]);
 
-    return () => clearInterval(slideInterval);
-  }, [candidates.length]);
 
-  const goToNextSlide = () => setCurrentSlide((prev) => (prev === 0 ? 1 : 0));
-  const goToPrevSlide = () => setCurrentSlide((prev) => (prev === 0 ? 1 : 0));
 
-  if (loading && candidates.length === 0) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
-        <div className="text-4xl font-bold text-blue-700 animate-pulse">
-          লোড হচ্ছে...
-        </div>
-      </div>
-    );
-  }
-
-  // প্রার্থীদের হিসাব
-  const totalCandidateVotes = candidates.reduce(
-    (sum, c) => sum + Number(c.votes || 0),
-    0,
+  const sorted = useMemo(
+    () =>
+      Array.isArray(candidates)
+        ? [...candidates].sort((a, b) => Number(b.votes) - Number(a.votes))
+        : [],
+    [candidates]
   );
 
-  const sortedCandidates = [...candidates].sort(
-    (a, b) => Number(b.votes) - Number(a.votes),
-  );
 
-  const maxVotes = sortedCandidates[0] ? Number(sortedCandidates[0].votes) : 0;
-  const leadingCount = sortedCandidates.filter(
-    (c) => Number(c.votes) === maxVotes,
-  ).length;
-
-  const leadingName =
-    maxVotes > 0 && leadingCount === 1
-      ? sortedCandidates[0].candidateName
+  const maxVotes = Number(sorted[0]?.votes || 0);
+  const leader =
+    sorted.filter((c) => Number(c.votes) === maxVotes).length === 1
+      ? sorted[0]?.candidateName
       : "—";
 
-  const candidatesWithPercent = sortedCandidates.map((c) => ({
-    ...c,
-    percent:
-      totalCandidateVotes > 0
-        ? ((Number(c.votes) / totalCandidateVotes) * 100).toFixed(2)
-        : 0,
-  }));
+  const candidatesWithPercent = useMemo(
+    () =>
+      Array.isArray(sorted)
+        ? sorted.map((c) => ({
+            ...c,
+            percent: totalVotes ? ((c.votes / totalVotes) * 100).toFixed(2) : 0,
+          }))
+        : [],
+    [sorted, totalVotes]
+  );
 
-  // গণভোটের হিসাব
   const yesVotes = Number(publicVote.yesVote || 0);
   const noVotes = Number(publicVote.noVote || 0);
-  const totalGanabhootVotes = yesVotes + noVotes;
 
-  const ganabhootData = [
-    { name: "হ্যাঁ", value: yesVotes, color: "#10b981" },
-    { name: "না", value: noVotes, color: "#f87171" },
-  ].filter((item) => item.value > 0);
+  const pieData = [
+    { name: "হ্যাঁ", value: yesVotes, color: "#16a34a" },
+    { name: "না", value: noVotes, color: "#dc2626" },
+  ];
 
-  const hasGanabhootData = totalGanabhootVotes > 0;
+  /* ================= UI ================= */
+  if (loading)
+    return (
+      <div className="flex justify-center items-center bg-black h-screen font-bold text-green-400 text-4xl animate-pulse">
+        ডেটা লোড হচ্ছে...
+      </div>
+    );
+    if (!Array.isArray(candidates)) {
+      return <div className="text-red-500 text-3xl">ডেটা ফরম্যাট ত্রুটি</div>;
+    }
+
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50 font-sans">
-      {/* হেডার – উচ্চতা কমানো */}
-      <header className="bg-gradient-to-r from-indigo-800 to-blue-900 text-white relative shrink-0 py-3">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-            ত্রয়োদশ জাতীয় সংসদ নির্বাচন ও গণভোট - ২০২৬ চট্টগ্রাম ১ মীরসরাই
-          </h1>
-          {/* <p className="mt-1 text-lg md:text-xl font-medium opacity-90">
-            চট্টগ্রাম ১
-          </p> */}
+    <div className="flex flex-col bg-black min-h-screen text-white">
+      {/* ===== HEADER SMALL HEIGHT ===== */}
+      <header className="flex justify-between items-center bg-indigo-900 px-10 py-4 text-lg md:text-3xl">
+        <div className="font-bold">
+          ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬ |
+          <span className="text-yellow-500">
+            {" "}
+            কেন্দ্র নংঃ {toBanglaNum(center)}
+          </span>
         </div>
 
-        <button
-          onClick={() => fetchAllData(true)}
-          disabled={isRefreshing}
-          className="absolute top-2 right-4 md:right-8 flex items-center gap-2 bg-indigo-700 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-lg shadow-lg transition-all text-sm disabled:opacity-60"
-        >
-          <RefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-          <span>{isRefreshing ? "হচ্ছে..." : "রিফ্রেশ"}</span>
-        </button>
+        <div className="flex md:flex-row flex-col gap-4 text-black text-md md:text-2xl">
+          <select value={center} onChange={(e) => setCenter(e.target.value)}>
+            {Object.keys(CENTERS).map((c) => (
+              <option key={c} value={c}>
+                কেন্দ্র {toBanglaNum(c)}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => fetchData(true)}
+            className="flex items-center gap-1 bg-blue-700 mx-auto px-2 py-1 rounded text-white text-center"
+          >
+            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+          </button>
+        </div>
       </header>
 
-      {/* ইনফো বার – উচ্চতা আরও কমানো */}
-      <div className="bg-white border-b shadow-sm shrink-0 py-2">
-        <div className="container mx-auto px-4 py-2 grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-          <div>
-            <p className="text-xs text-gray-600">মোট ভোটকেন্দ্র</p>
-            <p className="text-xl md:text-2xl lg:text-6xl font-bold text-indigo-700">
-              {toBanglaNum(publicVote.totalCenter || 106)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">গণনাকৃত কেন্দ্র</p>
-            <p className="text-xl md:text-2xl lg:text-6xl font-bold text-green-700">
-              {toBanglaNum(candidates[0]?.countedCenter || "—")}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">মোট ভোট</p>
-            <p className="text-xl md:text-2xl lg:text-6xl font-bold text-indigo-700">
-              {toBanglaNum(totalCandidateVotes.toLocaleString("en-US"))}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-600">অগ্রগণ্য</p>
-            <p className="text-lg md:text-xl lg:text-6xl font-bold text-orange-700 truncate">
-              {leadingName}
-            </p>
-          </div>
+      {/* ===== INFO BAR ===== */}
+      <div className="bg-gray-900 mx-auto border-gray-700 border-b w-full">
+        <div className="grid grid-cols-2 md:grid-cols-4 py-2 w-11/12 text-sm md:text-2xl text-center">
+          <div>মোট কেন্দ্র: {toBanglaNum(publicVote.totalCenter)}</div>
+          <div>গণনাকৃত: {toBanglaNum(candidates[0]?.countedCenter)}</div>
+          <div>মোট ভোট: {toBanglaNum(totalVotes.toLocaleString())}</div>
+          <div className="text-yellow-400">অগ্রগণ্য: {leader}</div>
         </div>
       </div>
 
-      {/* মূল কন্টেন্ট */}
-      <main className="flex-1 relative overflow-hidden">
-        {/* প্রার্থী স্লাইড */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-800 ${
-            currentSlide === 0 ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <div className="h-full flex flex-col">
-            {/* টেবিলের উপরের হেডিং – আরও ছোট করা */}
-            <div className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white py-2 px-4">
-              <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-center">
-                প্রার্থীদের ফলাফল (ভোট অনুসারে)
-              </h2>
-            </div>
+      {/* ===== MAIN ===== */}
+      {/* ===== MAIN DISPLAY AREA ===== */}
+      <main className="flex flex-col flex-1 bg-black px-6 py-2 min-h-0">
+        {/* TABLE / PIE AREA */}
+        <div className="flex-1 min-h-0 overflow-auto">
+          {" "}
+          {/* ===== SLIDE 1: RESULT TABLE ===== */}
+          {slide === 0 && (
+            <div className="flex-1 min-h-0 overflow-auto">
+              <table className="shadow-2xl rounded-xl w-full overflow-hidden text-sm md:text-xl border-collapse">
+                <thead className="top-0 sticky bg-indigo-700 text-white">
+                  <tr>
+                    <th className="p-3 border">ক্রম</th>
+                    <th className="p-3 border">প্রার্থী</th>
+                    <th className="p-3 border">দল</th>
+                    <th className="p-3 border">ভোট</th>
+                    <th className="p-3 border">%</th>
+                  </tr>
+                </thead>
 
-            {/* টেবিলের কন্টেইনার */}
-            <div className="flex-1 overflow-y-auto px-3 md:px-5 py-3">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] md:min-w-[1000px] border-collapse text-sm md:text-base">
-                  <thead>
-                    <tr className="bg-purple-100 text-purple-900">
-                      <th className="p-3 text-left w-14">ক্রম</th>
-                      <th className="p-3 text-left">প্রার্থী</th>
-                      <th className="p-3 text-left">দল</th>
-                      <th className="p-3 text-center">প্রতীক</th>
-                      <th className="p-3 text-right">ভোট</th>
-                      <th className="p-3 text-right">শতাংশ</th>
-                      <th className="p-3 w-48">প্রগতি</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {candidatesWithPercent.map((candidate, index) => (
+                <tbody>
+                  {candidatesWithPercent.map((c, i) => {
+                    const isLeader = Number(c.votes) === maxVotes;
+
+                    return (
                       <tr
-                        key={candidate.id}
-                        className={`border-b hover:bg-gray-50 transition-colors ${
-                          Number(candidate.votes) === maxVotes &&
-                          leadingCount === 1
-                            ? "bg-green-50 font-medium"
-                            : ""
-                        }`}
+                        key={i}
+                        className={` text-center
+                  border-b border-gray-700 
+                  ${i % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}
+                  ${
+                    isLeader
+                      ? "bg-green-700 text-white font-bold animate-pulse"
+                      : ""
+                  }
+                `}
                       >
-                        <td className="p-3 text-center font-bold">
-                          {toBanglaNum(index + 1)}
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden border border-gray-300">
-                              <img
-                                src={
-                                  candidate.candidateImage ||
-                                  `https://via.placeholder.com/48?text=${index + 1}`
-                                }
-                                alt={candidate.candidateName}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="text-sm md:text-base">
-                              {candidate.candidateName}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-3 text-sm md:text-base text-gray-700">
-                          {candidate.partyName}
-                        </td>
                         <td className="p-3 text-center">
-                          {candidate.symbolImage ? (
-                            <img
-                              src={candidate.symbolImage}
-                              alt="প্রতীক"
-                              className="w-10 h-10 mx-auto object-contain"
-                            />
-                          ) : (
-                            <span className="text-2xl">{candidate.marka}</span>
-                          )}
+                          {toBanglaNum(i + 1)}
                         </td>
-                        <td className="p-3 text-right font-bold text-xl md:text-2xl lg:text-3xl text-indigo-800">
-                          {toBanglaNum(
-                            Number(candidate.votes).toLocaleString("en-US"),
-                          )}
+                        <td className="p-3">{c.candidateName}</td>
+                        <td className="p-3">{c.partyName}</td>
+                        <td className="p-3 font-bold text-yellow-400">
+                          {toBanglaNum(c.votes)}
                         </td>
-                        <td className="p-3 text-right font-medium text-lg md:text-xl">
-                          {toBanglaNum(candidate.percent)}%
-                        </td>
-                        <td className="p-3">
-                          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
-                            <div
-                              className={`h-4 rounded-full transition-all duration-700 ease-out ${
-                                Number(candidate.votes) === maxVotes &&
-                                leadingCount === 1
-                                  ? "bg-green-600"
-                                  : "bg-indigo-500"
-                              }`}
-                              style={{ width: `${candidate.percent}%` }}
-                            ></div>
-                          </div>
-                        </td>
+                        <td className="p-3">{toBanglaNum(c.percent)}%</td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {/* ===== SLIDE 2: PIE CHART ===== */}
+          {slide === 1 && (
+            <div className="flex md:flex-row flex-col flex-1 justify-center items-center gap-10 px-4 w-full">
+              {/* Pie Chart */}
+              <div className="w-full md:w-1/2 h-64 md:h-[500px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      innerRadius="40%"
+                      outerRadius="80%"
+                      paddingAngle={2}
+                    >
+                      {pieData.map((d, i) => (
+                        <Cell key={i} fill={d.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Votes Text */}
+              <div className="flex flex-col justify-center items-center space-y-4 md:space-y-6 font-bold text-2xl md:text-5xl">
+                <div className="text-green-400">
+                  হ্যাঁ: {toBanglaNum(yesVotes)}
+                </div>
+                <div className="text-red-500">না: {toBanglaNum(noVotes)}</div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* গণভোট স্লাইড */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-800 flex items-center justify-center px-4 ${
-            currentSlide === 1 ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <div className="w-full max-w-5xl">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-8 text-purple-800">
-              গণভোটের সার্বিক ফলাফল
-            </h2>
+        {/* ===== CHEVRON CONTROLS BELOW ===== */}
+        {/* CHEVRON BAR FIXED HEIGHT */}
+        {/* CHEVRON BAR FIXED */}
+        <div className="flex justify-center items-center gap-6 bg-black py-2 border-gray-700 border-t">
+          <button
+            onClick={() => setSlide(0)}
+            className="bg-indigo-700 px-6 py-2 rounded-full"
+          >
+            <ChevronLeft size={28} />
+          </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-              {/* পাই চার্ট */}
-              <div className="h-[400px] md:h-[480px] lg:h-[540px]">
-                {hasGanabhootData ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={ganabhootData}
-                        cx="40%"
-                        cy="50%"
-                        innerRadius={90}
-                        outerRadius={140}
-                        paddingAngle={5}
-                        dataKey="value"
-                        labelLine={true}
-                        label={({
-                          cx,
-                          cy,
-                          midAngle,
-                          innerRadius,
-                          outerRadius,
-                          percent,
-                          name,
-                        }) => {
-                          const RADIAN = Math.PI / 180;
-                          const radius = outerRadius + 35;
-                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              fill="#1f2937"
-                              textAnchor={x > cx ? "start" : "end"}
-                              dominantBaseline="central"
-                              fontSize="16"
-                              fontWeight="bold"
-                            >
-                              {name}: {toBanglaNum((percent * 100).toFixed(1))}%
-                            </text>
-                          );
-                        }}
-                        animationDuration={1800}
-                        animationBegin={400}
-                        animationEasing="ease-out"
-                        isAnimationActive={true}
-                        startAngle={90}
-                        endAngle={450}
-                      >
-                        {ganabhootData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.color}
-                            stroke="#ffffff"
-                            strokeWidth={3}
-                            style={{ transition: "all 0.4s ease" }}
-                          />
-                        ))}
-                      </Pie>
-
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#111827",
-                          border: "none",
-                          borderRadius: "10px",
-                          color: "white",
-                          padding: "12px 16px",
-                          fontSize: "15px",
-                          fontWeight: "500",
-                        }}
-                        formatter={(value, name) => [
-                          <span className="font-bold">
-                            {toBanglaNum(value.toLocaleString("en-US"))}
-                          </span>,
-                          name,
-                        ]}
-                      />
-
-                      <Legend
-                        verticalAlign="bottom"
-                        height={60}
-                        iconSize={18}
-                        iconType="circle"
-                        wrapperStyle={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          color: "#1f2937",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-gray-600 text-xl font-medium">
-                    গণভোটের ডেটা এখনো পাওয়া যায়নি
-                  </div>
-                )}
-              </div>
-
-              {/* হ্যাঁ ও না */}
-              <div className="space-y-8">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-2xl shadow-xl text-center border border-green-200">
-                  <h3 className="text-2xl md:text-3xl font-bold text-green-800 mb-3">
-                    হ্যাঁ
-                  </h3>
-                  <p className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-green-700">
-                    {toBanglaNum(yesVotes.toLocaleString("en-US"))}
-                  </p>
-                </div>
-
-                <div className="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-2xl shadow-xl text-center border border-red-200">
-                  <h3 className="text-2xl md:text-3xl font-bold text-red-800 mb-3">
-                    না
-                  </h3>
-                  <p className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-red-700">
-                    {toBanglaNum(noVotes.toLocaleString("en-US"))}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-center mt-10 text-xl text-gray-700 font-medium">
-              গণনাকৃত কেন্দ্র:{" "}
-              <strong className="text-indigo-800">
-                {toBanglaNum(candidates[0]?.countedCenter || "—")}
-              </strong>
-            </p>
-          </div>
+          <button
+            onClick={() => setSlide(1)}
+            className="bg-indigo-700 px-6 py-2 rounded-full"
+          >
+            <ChevronRight size={28} />
+          </button>
         </div>
-
-        {/* নেভিগেশন বাটন */}
-        <button
-          onClick={goToPrevSlide}
-          className="absolute left-4 md:left-10 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-5 rounded-full transition-all z-20 shadow-2xl backdrop-blur-sm"
-        >
-          <ChevronLeft size={44} />
-        </button>
-
-        <button
-          onClick={goToNextSlide}
-          className="absolute right-4 md:right-10 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-5 rounded-full transition-all z-20 shadow-2xl backdrop-blur-sm"
-        >
-          <ChevronRight size={44} />
-        </button>
       </main>
 
-      {/* ফুটার – উচ্চতা কমানো */}
-      <div className="bg-gradient-to-r from-purple-800 to-indigo-900 text-white py-3 px-6 text-center text-base shrink-0">
-        <div className="flex flex-wrap justify-center items-center gap-6">
-          <span>মহিউদ্দিন জিলানী</span>
-          <span>উপজেলা আইসিটি অফিসার</span>
-          {/* <span>প্রার্থী: {toBanglaNum(candidates.length)}</span> */}
-          <span>মীরসরাই, চট্টগ্রাম</span>
-          {/* <span>গণভোট</span> */}
-          <span>•</span>
-          <span>পরবর্তী স্লাইড: ৬০ সেকেন্ডে</span>
-        </div>
-      </div>
+      {/* FOOTER SMALL */}
+      <footer className="bg-indigo-900 py-1 text-xs md:text-lg text-center">
+        মোঃ শরিফুল ইসলাম • সহকারী প্রোগ্রামার • কমিশনার অফিস • চট্টগ্রাম
+      </footer>
     </div>
   );
 }
-
-export default App;
