@@ -213,6 +213,7 @@ useEffect(() => {
                     <th className="p-3 border">ক্রম</th>
                     <th className="p-3 border">প্রার্থী</th>
                     <th className="p-3 border">দল</th>
+                    <th className="p-3 border">প্রতীক</th>
                     <th className="p-3 border">ভোট</th>
                     <th className="p-3 border">%</th>
                   </tr>
@@ -240,6 +241,7 @@ useEffect(() => {
                         </td>
                         <td className="p-3">{c.candidateName}</td>
                         <td className="p-3">{c.partyName}</td>
+                        <td className="p-3">{c.marka}</td>
                         <td className="p-3 font-bold text-yellow-400">
                           {toBanglaNum(c.votes)}
                         </td>
