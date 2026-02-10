@@ -35,16 +35,16 @@ const Header = ({
     : 0;
 
   return (
-    <div className="h-full bg-gradient-to-r from-blue-50 via-white to-purple-50 border-b-4 border-blue-300">
-      <div className="h-full flex flex-col">
+    <div className="bg-gradient-to-r from-blue-50 via-white to-purple-50 border-blue-300 border-b-4 h-full">
+      <div className="flex flex-col h-full">
         {/* টপ বার */}
-        <div className="flex-1 flex items-center justify-between px-8 py-1">
+        <div className="flex flex-1 justify-between items-center px-8 py-1">
           {/* লেফট সাইড */}
           <div className="flex items-center">
-            <div className="text-4xl font-bold text-blue-900 mr-6">
-              দ্বাদশ জাতীয় সংসদ নির্বাচন ২০২৪
+            <div className="mr-6 font-bold text-blue-900 text-4xl">
+              দ্বাদশ জাতীয় সংসদ নির্বাচন ২০২৬ 
             </div>
-            <div className="text-3xl font-bold text-red-600">API লাইভ ডেটা</div>
+            <div className="font-bold text-red-600 text-3xl">API লাইভ ডেটা</div>
           </div>
 
           {/* সেন্টার - স্লাইড ইন্ডিকেটর */}
@@ -84,7 +84,7 @@ const Header = ({
             >
               {autoRotate ? "🔄 স্বয়ংক্রিয়" : "⏸️ থামানো"}
             </button>
-            <div className="text-xl text-gray-700">
+            <div className="text-gray-700 text-xl">
               {autoRotate ? "১ মিনিটে স্লাইড" : "ম্যানুয়াল"}
             </div>
           </div>
@@ -92,15 +92,15 @@ const Header = ({
 
         {/* স্ট্যাটস বার */}
         <div className="flex-1">
-          <div className="h-full grid grid-cols-4 gap-2 px-6">
+          <div className="gap-2 grid grid-cols-4 px-6 h-full">
             {/* মোট ভোটকেন্দ্র */}
-            <div className="h-full flex items-center justify-between bg-white rounded-xl p-3 shadow">
+            <div className="flex justify-between items-center bg-white shadow p-3 rounded-xl h-full">
               <div>
-                <div className="text-lg text-gray-600 font-bold">
+                <div className="font-bold text-gray-600 text-lg">
                   মোট ভোটকেন্দ্র
                 </div>
-                <div className="text-3xl font-bold text-blue-700">২০০</div>
-                <div className="text-sm text-blue-600">
+                <div className="font-bold text-blue-700 text-3xl">২০০</div>
+                <div className="text-blue-600 text-sm">
                   API: {toBengaliNumber(countedCenters)} গণনা সম্পন্ন
                 </div>
               </div>
@@ -108,41 +108,41 @@ const Header = ({
             </div>
 
             {/* ফলাফল প্রাপ্ত কেন্দ্র */}
-            <div className="h-full flex items-center justify-between bg-white rounded-xl p-3 shadow">
+            <div className="flex justify-between items-center bg-white shadow p-3 rounded-xl h-full">
               <div>
-                <div className="text-lg text-gray-600 font-bold">
+                <div className="font-bold text-gray-600 text-lg">
                   ফলাফল প্রাপ্ত কেন্দ্র
                 </div>
-                <div className="text-3xl font-bold text-green-700">
+                <div className="font-bold text-green-700 text-3xl">
                   {toBengaliNumber(countedCenters)}
                 </div>
-                <div className="text-lg text-green-600">{countedPercent}%</div>
+                <div className="text-green-600 text-lg">{countedPercent}%</div>
               </div>
               <div className="text-3xl">✅</div>
             </div>
 
             {/* মোট ভোট */}
-            <div className="h-full flex items-center justify-between bg-white rounded-xl p-3 shadow">
+            <div className="flex justify-between items-center bg-white shadow p-3 rounded-xl h-full">
               <div>
-                <div className="text-lg text-gray-600 font-bold">মোট ভোট</div>
-                <div className="text-3xl font-bold text-purple-700">
+                <div className="font-bold text-gray-600 text-lg">মোট ভোট</div>
+                <div className="font-bold text-purple-700 text-3xl">
                   {toBengaliNumber(totalVotes)}
                 </div>
-                <div className="text-sm text-purple-600">API থেকে প্রাপ্ত</div>
+                <div className="text-purple-600 text-sm">API থেকে প্রাপ্ত</div>
               </div>
               <div className="text-3xl">🗳️</div>
             </div>
 
             {/* অগ্রণী প্রার্থী */}
-            <div className="h-full flex items-center justify-between bg-white rounded-xl p-3 shadow">
+            <div className="flex justify-between items-center bg-white shadow p-3 rounded-xl h-full">
               <div className="flex-1">
-                <div className="text-lg text-gray-600 font-bold">
+                <div className="font-bold text-gray-600 text-lg">
                   অগ্রণী প্রার্থী
                 </div>
-                <div className="text-xl font-bold text-yellow-700 truncate">
+                <div className="font-bold text-yellow-700 text-xl truncate">
                   {leadingCandidate?.candidateName || "..."}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-gray-600 text-sm">
                   {leadingCandidate
                     ? `${leadingCandidate.marka} - ${toBengaliNumber(parseInt(leadingCandidate.votes).toLocaleString())} ভোট`
                     : "..."}
@@ -154,21 +154,21 @@ const Header = ({
         </div>
 
         {/* ইনফো বার */}
-        <div className="h-10 bg-gradient-to-r from-blue-200 to-blue-100 flex items-center justify-between px-8 text-lg">
+        <div className="flex justify-between items-center bg-gradient-to-r from-blue-200 to-blue-100 px-8 h-10 text-lg">
           <div className="flex items-center space-x-6">
             <div className="flex items-center">
-              <span className="text-xl mr-2">📡</span>
+              <span className="mr-2 text-xl">📡</span>
               <span className="font-bold text-green-700">
                 API লাইভ: {totalCandidates} প্রার্থী
               </span>
             </div>
             <div className="flex items-center">
-              <span className="text-xl mr-2">📊</span>
+              <span className="mr-2 text-xl">📊</span>
               <span className="font-bold">গণভোট: {totalPublicVotes}টি</span>
             </div>
             {leadingCandidate && leadingPublicVotes > 0 && (
               <div className="flex items-center">
-                <span className="text-xl mr-2">👍</span>
+                <span className="mr-2 text-xl">👍</span>
                 <span className="font-bold">
                   হ্যাঁ/না: {toBengaliNumber(leadingYesVotes)}/
                   {toBengaliNumber(leadingNoVotes)}
@@ -179,20 +179,20 @@ const Header = ({
 
           <div className="flex items-center space-x-6">
             <div className="flex items-center">
-              <span className="text-xl mr-2">⏰</span>
+              <span className="mr-2 text-xl">⏰</span>
               <span className="font-bold">
                 সর্বশেষ:{" "}
                 {lastUpdated ? lastUpdated.toLocaleTimeString("bn-BD") : "..."}
               </span>
             </div>
             <div className="flex items-center">
-              <span className="text-xl mr-2">🔄</span>
+              <span className="mr-2 text-xl">🔄</span>
               <span className="font-bold">আপডেট: 10 সেকেন্ডে</span>
             </div>
           </div>
 
           <div className="flex items-center">
-            <span className="text-xl mr-2">🎯</span>
+            <span className="mr-2 text-xl">🎯</span>
             <span className="font-bold">
               স্লাইড:{" "}
               <span className="text-blue-700">

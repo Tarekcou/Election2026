@@ -9,14 +9,15 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import "./App.css";
 
 /* ================= CONFIG ================= */
 const CENTERS = {
-  "04": "https://script.google.com/macros/s/AKfycbwfHELKrGVCiP9TMwRsvOZfdjF8ObIUxtwOujZBl2ddPrlm7loJ-nlxNVWmhLGXs4h-Rg/exec",
-  "05": "https://script.google.com/macros/s/AKfycbyz-M_klRMYk7Cny0H_ALg6lcjX1dihnE7Z1bMM6bpRsKd66fJ4iPdBnYvd3tQMLfXcuA/exec",
-  "08": "https://script.google.com/macros/s/AKfycbxpp0Ll4TTyYyU7bxAyq6gWH472DtVTJ_TS3NrE_4TQCFOMs7mZK3SbxWHcP3ZPhYdX/exec",
-  "09": "https://script.google.com/macros/s/AKfycbwM7Out06tGOEguuxfBPT1lqAEEsrjKVokGidpWLaO8U2fvfdtu0P14UBeQ9hhw2QM-/exec",
-  "10": "https://script.google.com/macros/s/AKfycbzUH12Z9jG993bGk5y-ujPNPRTGKTqAqprWmblZxrh16RUvYNBtKPG3TRlD8UA3Yuk/exec",
+  "04": "https://script.google.com/macros/s/AKfycbyha8-gHDT3EFcwaLhufBdrrkoc-XjYO3cqHVkiG0UWoWIZgZtFqDX9h5eAp4Ty-CnBzg/exec",
+  "05": "https://script.google.com/macros/s/AKfycbxanVPq5Q4tjIIx9TjTHllSnkHpPxoRRYECbvx2bZXJ_p07JNJV0Fc2NMNKutAN0yj_/exec",
+  "08": "https://script.google.com/macros/s/AKfycbzWkTPbdRxg1HTNqjwl0E768UmzcOvEHj3gR-9oB78vLx4c4UuhjCfXPZoXtY23Cji_/exec",
+  "09": "https://script.google.com/macros/s/AKfycbxGJusmEnEyYcmjhQkH2ZkZm4jbW_MyEtz9HLPeDKxjVbXeYRNwUQM1sK6gt-ZoE0ig/exec",
+  "10": "https://script.google.com/macros/s/AKfycbxLzOIyyHZJxRRvYrejWGaUU1OcmXlQOKGLmfNc1mJcq8jInb09VYusNuZ7sReKo7fm/exec",
 };
 
 
@@ -47,30 +48,34 @@ useEffect(() => {
 }, [center]);
 
   /* ================= FETCH DATA ================= */
-  const fetchData = useCallback(
-    
-    async (manual = false) => {
-        if (!API_BASE) return;
+ const fetchData = useCallback(
+   async (manual = false) => {
+     if (!API_BASE) return;
 
-      manual && setRefreshing(true);
-      
-      try {
-        const [cRes, vRes] = await Promise.all([
-          axios.get(`${API_BASE}?route=candidates`),
-          axios.get(`${API_BASE}?route=publicVote`),
-        ]);
+     manual && setRefreshing(true);
 
-        setCandidates(cRes.data || []);
-        setPublicVote(vRes.data || {});
-      } catch (e) {
-        console.error("Fetch error:", e);
-      } finally {
-        setLoading(false);
-        manual && setRefreshing(false);
-      }
-    },
-    [API_BASE]
-  );
+     try {
+       const [cRes, vRes] = await Promise.all([
+         axios.get(
+           `${API_BASE}?route=candidates${manual ? "&refresh=true" : ""}`
+         ),
+         axios.get(
+           `${API_BASE}?route=publicVote${manual ? "&refresh=true" : ""}`
+         ),
+       ]);
+
+       setCandidates(cRes.data || []);
+       setPublicVote(vRes.data || {});
+     } catch (e) {
+       console.error("Fetch error:", e);
+     } finally {
+       setLoading(false);
+       manual && setRefreshing(false);
+     }
+   },
+   [API_BASE]
+ );
+
 
 
   useEffect(() => {
@@ -142,7 +147,7 @@ useEffect(() => {
   /* ================= UI ================= */
   if (loading)
     return (
-      <div className="flex justify-center items-center bg-black h-screen font-bold text-green-400 text-4xl animate-pulse">
+      <div className="flex justify-center items-center bg-black h-screen font-bold text-green-400 text-2xl animate-pulse">
         ডেটা লোড হচ্ছে...
       </div>
     );
@@ -155,9 +160,9 @@ useEffect(() => {
     <div className="flex flex-col bg-black min-h-screen text-white">
       {/* ===== HEADER SMALL HEIGHT ===== */}
       <header className="flex justify-between items-center bg-indigo-900 px-10 py-4 text-lg md:text-3xl">
-        <div className="font-bold">
-          ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬ |
-          <span className="text-yellow-500">
+        <div className="font-semibold">
+          ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬ -
+          <span className="text-yellow-500 text-4xl">
             {" "}
             কেন্দ্র নংঃ {toBanglaNum(center)}
           </span>
@@ -185,7 +190,9 @@ useEffect(() => {
       <div className="bg-gray-900 mx-auto border-gray-700 border-b w-full">
         <div className="grid grid-cols-2 md:grid-cols-4 py-2 w-11/12 text-sm md:text-2xl text-center">
           <div>মোট কেন্দ্র: {toBanglaNum(publicVote.totalCenter)}</div>
-          <div>গণনাকৃত: {toBanglaNum(candidates[0]?.countedCenter)}</div>
+          <div>
+            গণনাকৃত কেন্দ্র  : {toBanglaNum(candidates[0]?.countedCenter)}
+          </div>
           <div>মোট ভোট: {toBanglaNum(totalVotes.toLocaleString())}</div>
           <div className="text-yellow-400">অগ্রগণ্য: {leader}</div>
         </div>
@@ -193,7 +200,7 @@ useEffect(() => {
 
       {/* ===== MAIN ===== */}
       {/* ===== MAIN DISPLAY AREA ===== */}
-      <main className="flex flex-col flex-1 bg-black px-6 py-2 min-h-0">
+      <main className="flex flex-col flex-1 bg-black px-2 md:px-6 py-2 min-h-0">
         {/* TABLE / PIE AREA */}
         <div className="flex-1 min-h-0 overflow-auto">
           {" "}
@@ -301,7 +308,7 @@ useEffect(() => {
 
       {/* FOOTER SMALL */}
       <footer className="bg-indigo-900 py-1 text-xs md:text-lg text-center">
-        মোঃ শরিফুল ইসলাম • সহকারী প্রোগ্রামার • কমিশনার অফিস • চট্টগ্রাম
+       সফটওয়্যার পরিকল্পনা ও বাস্তবায়নঃ  মোঃ শরিফুল ইসলাম (সহকারী প্রোগ্রামার, কমিশনার অফিস , চট্টগ্রাম) 
       </footer>
     </div>
   );
