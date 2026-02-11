@@ -149,8 +149,13 @@ useEffect(() => {
   /* ================= UI ================= */
   if (loading)
     return (
-      <div className="flex justify-center items-center bg-black h-screen font-bold text-green-400 text-2xl animate-pulse">
-        ডেটা লোড হচ্ছে...
+      <div className="flex flex-col justify-center items-center space-y-2 bg-black min-h-screen">
+        <div className="font-bold text-blue-600 text-xl md:text-5xl">
+          আসন {toBanglaNum(center)}
+        </div>
+        <div className="text-gray-500 text-lg md:text-2xl animate-pulse">
+          ফলাফল প্রদর্শন করা হচ্ছে…
+        </div>
       </div>
     );
     if (!Array.isArray(candidates)) {
