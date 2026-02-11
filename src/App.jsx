@@ -110,31 +110,27 @@ useEffect(() => {
 
 
 
-  const sorted = useMemo(
-    () =>
-      Array.isArray(candidates)
-        ? [...candidates].sort((a, b) => Number(b.votes) - Number(a.votes))
-        : [],
-    [candidates]
-  );
-
-
-  const maxVotes = Number(sorted[0]?.votes || 0);
-  const leader =
-    sorted.filter((c) => Number(c.votes) === maxVotes).length === 1
-      ? sorted[0]?.candidateName
-      : "—";
-
   const candidatesWithPercent = useMemo(
     () =>
-      Array.isArray(sorted)
-        ? sorted.map((c) => ({
+      Array.isArray(candidates)
+        ? candidates.map((c) => ({
             ...c,
             percent: totalVotes ? ((c.votes / totalVotes) * 100).toFixed(2) : 0,
           }))
         : [],
-    [sorted, totalVotes]
+    [candidates, totalVotes]
   );
+
+  const maxVotes = Number(
+    candidatesWithPercent.reduce((max, c) => Math.max(max, Number(c.votes)), 0)
+  );
+
+  const leader =
+    candidatesWithPercent.filter((c) => Number(c.votes) === maxVotes).length ===
+    1
+      ? candidatesWithPercent.find((c) => Number(c.votes) === maxVotes)
+          ?.candidateName
+      : "—";
 
   const yesVotes = Number(publicVote.yesVote || 0);
   const noVotes = Number(publicVote.noVote || 0);
@@ -162,17 +158,17 @@ useEffect(() => {
       <header className="flex justify-between items-center bg-indigo-900 px-10 py-4 text-lg md:text-3xl">
         <div className="font-semibold">
           ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬ -
-          <span className="text-yellow-500 text-4xl">
+          <span className="text-yellow-500 text-2xl md:text-4xl">
             {" "}
-            কেন্দ্র নংঃ {toBanglaNum(center)}
+            আসন নংঃ {toBanglaNum(center)}
           </span>
         </div>
 
         <div className="flex md:flex-row flex-col gap-4 text-black text-md md:text-2xl">
-          <select value={center} onChange={(e) => setCenter(e.target.value)}>
+          <select className="px-4" value={center} onChange={(e) => setCenter(e.target.value)}>
             {Object.keys(CENTERS).map((c) => (
               <option key={c} value={c}>
-                কেন্দ্র {toBanglaNum(c)}
+                আসন {toBanglaNum(c)}
               </option>
             ))}
           </select>
@@ -229,11 +225,7 @@ useEffect(() => {
                         className={` text-center
                   border-b border-gray-700 
                   ${i % 2 === 0 ? "bg-gray-900" : "bg-gray-800"}
-                  ${
-                    isLeader
-                      ? "bg-green-700 text-white font-bold animate-pulse"
-                      : ""
-                  }
+                  
                 `}
                       >
                         <td className="p-3 text-center">
