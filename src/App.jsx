@@ -136,7 +136,7 @@ useEffect(() => {
     1
       ? candidatesWithPercent.find((c) => Number(c.votes) === maxVotes)
           ?.candidateName
-      : "—";
+      : "  —";
 
   const yesVotes = Number(publicVote.yesVote || 0);
   const noVotes = Number(publicVote.noVote || 0);
@@ -167,36 +167,44 @@ useEffect(() => {
     <div className="flex flex-col bg-black min-h-screen text-white">
       {/* ===== HEADER SMALL HEIGHT ===== */}
       {/* ===== HEADER SMALL HEIGHT WITH PIE ===== */}
-      <header className="flex md:flex-row flex-col justify-between items-center gap-4 bg-indigo-900 px-4 md:px-10 py-4 text-lg md:text-3xl">
-        {/* Left: Title */}
-        <div className="font-semibold md:text-left text-center">
-          ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬ -
-          <span className="text-yellow-500 text-2xl md:text-4xl">
+      <header className="bg-indigo-900 px-4 md:px-10 py-4">
+        <div className="flex md:flex-row flex-col justify-between items-center gap-4 text-lg md:text-3xl">
+          {/* Left: Title */}
+          <div className="font-semibold md:text-left text-center">
+            ত্রয়োদশ জাতীয় সংসদ নির্বাচন ২০২৬
+          </div>
+
+          {/* Middle: Dropdown + Refresh */}
+          <div className="flex md:flex-row flex-col items-center gap-4 text-black text-md md:text-2xl">
+            <select
+              className="px-4"
+              value={center}
+              onChange={(e) => setCenter(e.target.value)}
+            >
+              {Object.keys(CENTERS).map((c) => (
+                <option key={c} value={c}>
+                  আসন {toBanglaNum(c)}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => fetchData(true)}
+              className="flex items-center gap-1 bg-blue-700 mx-auto px-2 py-2 rounded text-white text-center"
+            >
+              <RefreshCw
+                size={18}
+                className={refreshing ? "animate-spin" : ""}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <span className="font-bold text-yellow-500 text-2xl md:text-4xl text-center">
             {" "}
             আসন নংঃ {toBanglaNum(center)}
           </span>
-        </div>
-
-        {/* Middle: Dropdown + Refresh */}
-        <div className="flex md:flex-row flex-col items-center gap-4 text-black text-md md:text-2xl">
-          <select
-            className="px-4"
-            value={center}
-            onChange={(e) => setCenter(e.target.value)}
-          >
-            {Object.keys(CENTERS).map((c) => (
-              <option key={c} value={c}>
-                আসন {toBanglaNum(c)}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => fetchData(true)}
-            className="flex items-center gap-1 bg-blue-700 mx-auto px-2 py-1 rounded text-white text-center"
-          >
-            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
-          </button>
         </div>
       </header>
 
@@ -208,7 +216,7 @@ useEffect(() => {
             গণনাকৃত কেন্দ্র : {toBanglaNum(candidates[0]?.countedCenter)}
           </div>
           <div>মোট ভোট: {toBanglaNum(totalVotes.toLocaleString())}</div>
-          <div className="text-yellow-400">অগ্রগণ্য: {leader}</div>
+          <div className="text-yellow-400">ভোটে এগিয়ে:{leader}</div>
         </div>
       </div>
 
@@ -271,41 +279,49 @@ useEffect(() => {
       {/* ===== MAIN DISPLAY AREA ===== */}
       <main className="flex flex-col flex-1 bg-black px-2 md:px-6 py-2 min-h-0">
         <div className="flex-1 min-h-0 overflow-auto">
-          <table className="shadow-2xl rounded-xl w-full overflow-hidden text-sm md:text-xl border-collapse">
-            <thead className="top-0 sticky bg-indigo-700 text-white">
-              <tr>
-                <th className="p-3 border">ক্রম</th>
-                <th className="p-3 border">প্রার্থী</th>
-                <th className="p-3 border">দল</th>
-                <th className="p-3 border">প্রতীক</th>
-                <th className="p-3 border">ভোট</th>
-                <th className="p-3 border">%</th>
-              </tr>
-            </thead>
+          {candidatesWithPercent && candidatesWithPercent.length > 0 ? (
+            <table className="shadow-2xl rounded-xl w-full overflow-hidden text-sm md:text-xl border-collapse">
+              <thead className="top-0 sticky bg-indigo-700 text-white">
+                <tr>
+                  <th className="p-3 border">ক্রম</th>
+                  <th className="p-3 border">প্রার্থী</th>
+                  <th className="p-3 border">দল</th>
+                  <th className="p-3 border">প্রতীক</th>
+                  <th className="p-3 border">ভোট</th>
+                  <th className="p-3 border">%</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {candidatesWithPercent.map((c, i) => {
-                const isLeader = Number(c.votes) === maxVotes;
-                return (
-                  <tr
-                    key={i}
-                    className={`text-center border-b border-gray-700 ${
-                      i % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
-                    }`}
-                  >
-                    <td className="p-3 text-center">{toBanglaNum(i + 1)}</td>
-                    <td className="p-3">{c.candidateName}</td>
-                    <td className="p-3">{c.partyName}</td>
-                    <td className="p-3">{c.marka}</td>
-                    <td className="p-3 font-bold text-yellow-400">
-                      {toBanglaNum(c.votes)}
-                    </td>
-                    <td className="p-3">{toBanglaNum(c.percent)}%</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              <tbody>
+                {candidatesWithPercent.map((c, i) => {
+                  const isLeader = Number(c.votes) === maxVotes;
+                  return (
+                    <tr
+                      key={i}
+                      className={`text-center border-b border-gray-700 ${
+                        i % 2 === 0 ? "bg-gray-900" : "bg-gray-800"
+                      }`}
+                    >
+                      <td className="p-3 text-center">{toBanglaNum(i + 1)}</td>
+                      <td className="p-3">{c.candidateName}</td>
+                      <td className="p-3">{c.partyName}</td>
+                      <td className="p-3">{c.marka}</td>
+                      <td className="p-3 font-bold text-yellow-400">
+                        {toBanglaNum(c.votes)}
+                      </td>
+                      <td className="p-3">{toBanglaNum(c.percent)}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          ) : (
+            <div>
+              <div className="mt-20 text-gray-500 text-lg md:text-2xl text-center animate-pulse">
+                প্রদর্শন করা হচ্ছে…
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
