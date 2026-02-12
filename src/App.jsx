@@ -27,7 +27,7 @@ const CENTERS = {
 };
 
 
-const REFRESH_INTERVAL = 3 * 15 * 1000;
+const REFRESH_INTERVAL = 3 * 40 * 1000;
 const SLIDE_INTERVAL = 60 * 1000;
 const CENTER_ROTATE_INTERVAL = 30 * 1000;
 
@@ -216,7 +216,7 @@ useEffect(() => {
             গণনাকৃত কেন্দ্র : {toBanglaNum(candidates[0]?.countedCenter)}
           </div>
           <div>মোট ভোট: {toBanglaNum(totalVotes.toLocaleString())}</div>
-          <div className="text-yellow-400">ভোটে এগিয়ে:{leader}</div>
+          {/* <div className="text-yellow-400">ভোটে এগিয়ে:{leader}</div> */}
         </div>
       </div>
 
