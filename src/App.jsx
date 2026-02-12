@@ -210,7 +210,7 @@ useEffect(() => {
 
       {/* ===== INFO BAR ===== */}
       <div className="bg-gray-900 mx-auto border-gray-700 border-b w-full">
-        <div className="grid grid-cols-2 md:grid-cols-4 py-2 w-11/12 text-sm md:text-2xl text-center">
+        <div className="grid grid-cols-2 md:grid-cols-3 py-2 w-11/12 text-sm md:text-2xl text-center">
           <div>মোট কেন্দ্র: {toBanglaNum(publicVote.totalCenter)}</div>
           <div>
             গণনাকৃত কেন্দ্র : {toBanglaNum(candidates[0]?.countedCenter)}
