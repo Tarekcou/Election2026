@@ -29,7 +29,7 @@ const CENTERS = {
 
 const REFRESH_INTERVAL = 3 * 40 * 1000;
 const SLIDE_INTERVAL = 60 * 1000;
-const CENTER_ROTATE_INTERVAL = 30 * 1000;
+const CENTER_ROTATE_INTERVAL = 90 * 1000;
 
 /* ================= UTILS ================= */
 const banglaDigits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
